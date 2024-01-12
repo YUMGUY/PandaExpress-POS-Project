@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: client/src/App.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: client/src/App.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file App.js - Creates an application using all the different routes to connect to our react components
+ */
+
+//Bootstrap
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Provider } from "react-redux";
+import store from "./store";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import Login from "./components/Login/login";
+import Register from "./components/Login/register";
+import Landing from "./components/Gen/landing";
+import NavBar from "./components/Gen/NavBar";
+import UserMenu from "./components/User/menu";
+import UserBag from "./components/User/bag";
+import UserSettings from "./components/User/settings";
+import Help from "./components/User/help";
+import FindStore from "./components/User/findStore";
+import ProcessOrders from "./components/Cashier/processOrders";
+import AdjustMenu from "./components/Manager/adjustMenu";
+import Reports from "./components/Manager/reports";
+import AddMenuItem from "./components/Manager/addMenuItem";
+
+import setAuthToken from "./utils/setAuthToken";
+import { setCurrentUser, logoutUser } from "./actions/authActions";
+import jwt_decode from "jwt-decode";
+import PrivateUserRoute from "./components/private-routes/PrivateUserRoute";
+import PrivateManagerRoute from "./components/private-routes/PrivateManagerRoute";
+import PrivateCashierRoute from "./components/private-routes/PrivateCashierRoute";
+import PrivateOnlineUserRoute from "./components/private-routes/PrivateOnlineUserRoute";
+
+// Check for token to keep user logged in
+if (localStorage.jwtToken) {
+  // Set auth token header auth
+  const token = localStorage.jwtToken;
+  setAuthToken(token);
+
+  // Decode token and get user info and exp
+  const decoded = jwt_decode(token);
+
+  // Set user and isAuthenticated
+  store.dispatch(setCurrentUser(decoded));
+
+  // Check for expired token
+  const currentTime = Date.now() / 1000; // to get in milliseconds
+
+  if (decoded.exp &lt; currentTime) {
+    // Logout user
+    store.dispatch(logoutUser());
+
+    // Redirect to login
+    window.location.href = "./login";
+  }
+}
+
+/**
+ * A function that sets each route to the component it is assigned to
+ * @returns React html
+ */
+function App() {
+  return (
+    &lt;Provider store={store}>
+      &lt;Router>
+        &lt;div className="App">
+          &lt;NavBar />
+          &lt;Route exact path="/" component={Landing} />
+          &lt;Switch>
+              &lt;Route exact path="/login" component={Login} />
+              &lt;Route exact path="/register" component={Register} />
+              &lt;Route exact path="/menu" component={UserMenu} />
+              &lt;Route exact path="/findStore" component={FindStore} />
+              &lt;PrivateOnlineUserRoute exact path="/settings" component={UserSettings} />
+              &lt;PrivateUserRoute exact path="/bag" component={UserBag} />
+              &lt;PrivateUserRoute exact path="/help" component={Help} />
+              &lt;PrivateCashierRoute exact path="/processOrders" component={ProcessOrders} />
+              &lt;PrivateManagerRoute exact path="/adjustMenu" component={AdjustMenu} />
+              &lt;PrivateManagerRoute exact path="/reports" component={Reports} />
+              &lt;PrivateManagerRoute exact path="/addMenuItem" component={AddMenuItem} />
+              
+          &lt;/Switch>
+        &lt;/div>
+      &lt;/Router>
+    &lt;/Provider>
+  );
+}
+
+export default App;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Help.html">Help</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-MenuItem.html">MenuItem</a></li><li><a href="module-NavBar.html">NavBar</a></li><li><a href="module-OrderReportCard.html">OrderReportCard</a></li><li><a href="module-Register.html">Register</a></li><li><a href="module-Settings.html">Settings</a></li><li><a href="module-UserMenu.html">UserMenu</a></li><li><a href="module-addMenuItem.html">addMenuItem</a></li><li><a href="module-adjustMenu.html">adjustMenu</a></li><li><a href="module-adjustableMenuItemCard.html">adjustableMenuItemCard</a></li><li><a href="module-authActions.html">authActions</a></li><li><a href="module-authReducers.html">authReducers</a></li><li><a href="module-bag.html">bag</a></li><li><a href="module-bagCard.html">bagCard</a></li><li><a href="module-dbInstance.html">dbInstance</a></li><li><a href="module-errorReducers.html">errorReducers</a></li><li><a href="module-findStore.html">findStore</a></li><li><a href="module-indexReducers.html">indexReducers</a></li><li><a href="module-landing.html">landing</a></li><li><a href="module-menu.html">menu</a></li><li><a href="module-menuItemCard.html">menuItemCard</a></li><li><a href="module-orderItemCard.html">orderItemCard</a></li><li><a href="module-orders.html">orders</a></li><li><a href="module-processOrders.html">processOrders</a></li><li><a href="module-reportItemCard.html">reportItemCard</a></li><li><a href="module-reports.html">reports</a></li><li><a href="module-restockReportCard.html">restockReportCard</a></li><li><a href="module-translator.html">translator</a></li><li><a href="module-types.html">types</a></li><li><a href="module-user.html">user</a></li><li><a href="module-userCard.html">userCard</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#PrivateCashierRoute">PrivateCashierRoute</a></li><li><a href="global.html#PrivateManagerRoute">PrivateManagerRoute</a></li><li><a href="global.html#PrivateOnlineUserRoute">PrivateOnlineUserRoute</a></li><li><a href="global.html#PrivateUserRoute">PrivateUserRoute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Dec 06 2022 19:58:14 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: routes/users.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: routes/users.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * User routes module. This module creates a router that can be used to connect to our database and interact with any data pertaining to the user.
+ * @module user
+ */
+
+
+const express = require("express");
+const { Pool, Client } = require("pg");
+
+/**
+ * function to get and set database information relative to users
+ * @returns {Object} different methods to view and change the database
+ */
+const router = express.Router();
+
+/**
+ * function to create and secure a token within the users browser
+ * @returns {Object} an encrypted payload with user information
+ */
+const jwt = require("jsonwebtoken");
+const keys = require('../config/keys');
+const bcrypt = require("bcryptjs");
+
+/**
+ * A secure connection to the database
+ * Object
+ * @type {{connectionString: string}}
+ */
+const { pool } = require("../dbInstance");
+// import {pool} from "../dbInstance";
+
+
+/**
+ * function to log a user into an account
+ * @param {string} username - the user's username
+ * @param {string} password - the user's password
+ * @returns {Object} an encrypted payload with user information
+ */
+router.post("/login", (req, res) => {
+
+  const username = req.body.username.trim();
+  const password = req.body.password.trim();
+
+  pool.query('SELECT * FROM users', (err, result) => {
+    if(err) {
+      return console.log('Error executing query', err.stack)
+    }
+
+    for(let i = 0; i &lt; result.rows.length; i++){
+      if(result.rows[i].username === username){
+        bcrypt.compare(password, result.rows[i].password).then((isMatch) => {
+          if(isMatch){
+            let screenText;
+            if(result.rows[i].role === "user"){
+              screenText = {"Menu": "Menu", "Bag": "Bag", "Settings": "Settings", "Help": "Help", "My Settings": "My Settings",
+
+                            // Settings
+                            "Language":"Language", "Save Changes!": "Save Changes!", 
+                      
+                            // Landing
+                            "Welcome to Panda Express": "Welcome to Panda Express", "Click 'Menu' above to start your order!":"Click 'Menu' above to start your order!",
+                             "If you need any help, click 'Help' above":"If you need any help, click 'Help' above",
+
+                            // Menu
+                            "Menu":"Menu", "Bowl":"Bowl", "1 side &amp; 1 entree":"1 side &amp; 1 entree", "Plate":"Plate", "1 side &amp; 2 entrees":"1 side &amp; 2 entrees",
+                            "Bigger Plate":"Bigger Plate", "1 side &amp; 3 entrees":"1 side &amp; 3 entrees", "Drinks":"Drinks", "Add a drink":"Add a drink",
+                            "Appetizers":"Appetizers", "Start your meal with something small":"Start your meal with something small", "Choose a Side":"Choose a Side",
+                            "Choose":"Choose", "Entrees":"Entrees", "Cancel":"Cancel", "Add to Bag":"Add to Bag", "Total":"Total", "Go to Bag":"Go to Bag",
+                            
+                            // Bag
+                            "Your Order":"Your Order", "Submit Order": "Submit Order", "Your Bag is Empty!":"Your Bag is Empty!",
+
+                            // Help
+                            "Click on an item to learn more about that topic!":"Click on an item to learn more about that topic!", "How to Make an Order":"How to Make an Order",
+                            "How to Add Items to Your Bag":"How to Add Items to Your Bag", "How to Edit an Order":"How to Edit an Order", "Submitting an Order":"Submitting an Order",
+                            "Changing your Settings":"Changing your Settings",
+                          
+                            
+                          }
+            }
+            else if(result.rows[i].role === "manager"){
+              screenText = {"My Settings": "My Settings", "Language":"Language", "Text-to-Speech": "Text-to-Speech",
+              "Enable Text-to-Speech": "Enable Text-to-Speech", "Disable Text-to-Speech": "Disable Text-to-Speech",
+              "Save Changes!": "Save Changes!", "Menu": "Menu", "Bag": "Bag", "Settings": "Settings", "Help": "Help",
+              "Hi": "Hi"}
+            }
+            else if(result.rows[i].role === "cashier"){
+              screenText = {"My Settings": "My Settings", "Language":"Language", "Text-to-Speech": "Text-to-Speech",
+              "Enable Text-to-Speech": "Enable Text-to-Speech", "Disable Text-to-Speech": "Disable Text-to-Speech",
+              "Save Changes!": "Save Changes!", "Menu": "Menu", "Bag": "Bag", "Settings": "Settings", "Help": "Help",
+              "Hi": "Hi"}
+            }
+            else if(result.rows[i].role === "online-user"){
+              screenText = {"Menu": "Menu", "Bag": "Bag", "Settings": "Settings", "Help": "Help", "My Settings": "My Settings",
+
+                            // Settings
+                            "Language":"Language", "Save Changes!": "Save Changes!", 
+
+                            // Menu
+                            "Menu":"Menu", "Bowl":"Bowl", "1 side &amp; 1 entree":"1 side &amp; 1 entree", "Plate":"Plate", "1 side &amp; 2 entrees":"1 side &amp; 2 entrees",
+                            "Bigger Plate":"Bigger Plate", "1 side &amp; 3 entrees":"1 side &amp; 3 entrees", "Drinks":"Drinks", "Add a drink":"Add a drink",
+                            "Appetizers":"Appetizers", "Start your meal with something small":"Start your meal with something small", "Choose a Side":"Choose a Side",
+                            "Choose":"Choose", "Entrees":"Entrees", "Cancel":"Cancel", "Add to Bag":"Add to Bag", "Total":"Total", "Go to Bag":"Go to Bag",
+
+                            // Landing
+                            "Welcome to Panda Express": "Welcome to Panda Express", "Click 'Menu' above to start your order!":"Click 'Menu' above to start your order!",
+                            "If you need any help, click 'Help' above":"If you need any help, click 'Help' above",
+            
+                            // Find Store
+                            "Find my Store":"Find my Store", "Enter your address to map to our store.":"Entre your address to map to our store.",
+                            "Find Route!":"Find Route!", "is located at:": "is located at:",
+                          
+                          }
+            }
+
+            let lang;
+            if(result.rows[i].language == null){
+              lang = "English";
+            }else{
+              lang = result.rows[i].language
+            }
+
+            const payload = {
+              id: result.rows[i].userid,
+              fname: result.rows[i].first,
+              lname: result.rows[i].last,
+              username: result.rows[i].username,
+              role: result.rows[i].role,
+              language: lang,
+              tts: result.rows[i].tts,
+              screenText: screenText,
+            };
+
+            // Sign token
+            jwt.sign(
+              payload,
+              keys.secretOrKey,
+              {
+                expiresIn: 604800, // 7 days in seconds
+              },
+              (err, token) => {
+                res.json({
+                  success: true,
+                  token: "Bearer " + token,
+                });
+              }
+            );
+    
+            return;
+          }else{
+            return res
+              .status(400)
+              .json({ passwordincorrect: "Password incorrect" });
+          }
+        });
+      }
+    }
+
+  })
+
+});
+
+/**
+ * function to create an account on the database
+ * @param {string} fname - the user's first name
+ * @param {string} lname - the user's last name
+ * @param {string} username - the user's username
+ * @param {string} email - the user's email
+ * @param {string} password - the user's password
+ * @param {string} password2 - the user's confirmation password entry
+ * @returns {Object} an object containing the new user id
+ */
+router.post("/register", async (req, res) => {
+    const fname = req.body.fname.trim();
+    const lname = req.body.lname.trim();
+    const username = req.body.username.trim();
+    const email = req.body.email.trim();
+    const password = req.body.password.trim();
+    const password2 = req.body.password2.trim();
+    let userID = 0;
+
+    if(fname == "" || lname == ""){
+      return res.status(400).json({name: "Please enter a name!"})
+    }
+    if(!email.includes("@")){
+      return res.status(400).json({registerEmail: "Invalid email!"});
+    }
+    if(password != password2){
+      return res.status(400).json({registerPassword2: "Password does not match!"});
+    }
+    
+    pool.query('SELECT * FROM users', (err, result) => {
+      if(err) {
+        return console.log('Error executing query', err.stack)
+      }
+      userID = result.rows.length + 1;
+
+      for(let i = 0; i &lt; result.rows.length; i++){
+        if(email == result.rows[i].email){
+          return res.status(400).json({registerEmail: "Email already exists!"});
+        }
+        if(username == result.rows[i].username){
+          return res.status(400).json({registerUsername: "Username already exists!"});
+        }
+      }
+
+      let password_hashed = "";
+
+      bcrypt.genSalt(10, (err, salt) => {
+        bcrypt.hash(password, salt, (err, hash) => {
+          if(err){
+            console.log(err);
+            res.status(400).json({message: "Error creating account!"});
+          };
+          password_hashed = hash;
+
+          pool.query(`INSERT INTO users VALUES (${userID}, '${fname}', '${lname}', 'online-user', '${username}', '${password_hashed}', '${email}', NULL, NULL, 'English', false)`, (err, result) => {
+            if(err) {
+              return console.log('Error executing query', err.stack)
+            }
+            res.status(200).json(result);
+          })
+        })
+      })
+
+
+    });
+
+
+});
+
+
+/**
+ * function to get a user's current order string from the database
+ * @param {number} userID - the user's userID
+ * @returns {Object} an object with the user's current order string
+ */
+router.get("/getCurrentOrder", async (req, res) => {
+  const userID = req.query.userID;
+  
+  pool.query(`SELECT current_order, current_order_price FROM users WHERE userid=${userID}`, (err, result) => {
+    if(err){
+      return console.log(err);
+    }
+    res.status(200).json(result.rows[0]);
+  });
+
+})
+
+/**
+ * function to get a user's current settings from the database
+ * @param {number} userID - the user's userID
+ * @returns {Object} an object with the user's current settings
+ */
+router.get("/getUserSettings", async(req, res) => {
+  const userID = req.query.userID;
+  pool.query(`SELECT language, tts FROM users WHERE userid=${userID}`, (err, result) => {
+    if(err){
+      console.log(err);
+    }
+    res.status(200).json(result.rows[0]);
+  })
+})
+
+/**
+ * function to set a user's current settings from the database
+ * @param {number} userID - the user's userID
+ * @returns {Object} an object with a success message
+ */
+router.post("/saveSettings", async (req, res) => {
+  const userID = req.body.params.userID;
+  const language = req.body.params.language;
+  const tts = req.body.params.tts;
+
+  pool.query(`UPDATE users SET language='${language}', tts=${tts} WHERE userid=${userID}`, (err, result) => {
+    if(err){
+      console.log(err);
+    }
+    res.status(200).json({message: "User settings successfully updated!"});
+  })
+
+})
+
+/**
+ * function to duplicate an item from user's current order
+ * @param {number} userID - the user's userID
+ * @param {string} fullUserOrderItem - the item being duplicated
+ * @returns {Object} an object with a success message.
+ */
+router.post("/addUserItem", async(req, res) => {
+  const userID = req.body.params.employeeID;
+  var fullUserOrderItem = req.body.params.fullOrder_semi;
+  console.log(fullUserOrderItem + " : item added with the semi colons intact");
+
+  var user_Order = [];
+  var user_Order_Price = [];
+  user_Order = (await pool.query(`SELECT current_order FROM users WHERE userid=${userID}`)).rows[0].current_order;
+  user_Order_Price = (await pool.query(`SELECT current_order_price FROM users WHERE userid=${userID}`)).rows[0].current_order_price;
+  var priceWanted = 0;
+  user_Order = user_Order.split(", ");
+  user_Order_Price = user_Order_Price.split(", ");
+  // long and convoluted way, but gets the price either way
+  for(let i = 0; i &lt; user_Order.length; ++i) {
+    if(user_Order.at(i) == fullUserOrderItem) {
+      // capture the price
+      priceWanted = user_Order_Price.at(i);
+    }
+  }
+  
+  user_Order.push(fullUserOrderItem);
+  user_Order = user_Order.join(", ");
+  user_Order_Price.push(priceWanted);
+  user_Order_Price = user_Order_Price.join(", ");
+
+  // console.log(user_Order);
+  // console.log(user_Order_Price);
+  pool.query("UPDATE users SET current_order =" + "'" + user_Order + "'" + " WHERE userid = "+ userID, (err, result) => {
+    if(err) {
+      return console.log(err);
+    };
+  });
+  pool.query("UPDATE users SET current_order_price =" + "'" + user_Order_Price + "'" + " WHERE userid = "+ userID, (err, result) => {
+    if(err) {
+      return console.log(err);
+    };
+    res.status(200).json({message: "Successfully added item!"});
+  });
+})
+
+/**
+ * function to remove an item from user's current order
+ * @param {number} userID - the user's userID
+ * @param {string} fullUserOrderItem - the item being removed
+ * @returns {Object} an object with a success message.
+ */
+router.post("/removeUserItem", async(req, res) => {
+  const userID = req.body.params.employeeID;
+  const bagItemString = req.body.params.bagItem; // passed in as the button is clicked for each order item
+  var fullUserOrder = req.body.params.fullOrder_semi; // has semi colons for bowl, plate, bigger plate, etc
+  console.log(fullUserOrder + " : item removed with the semi colons intact");
+  var user_Order = [];
+//  console.log(bagItemString + " : item selected to remove");
+  //res is the whole list
+  user_Order = (await pool.query(`SELECT current_order FROM users WHERE userid=${userID}`)).rows[0].current_order;
+  var user_Order_Price = (await pool.query(`SELECT current_order_price FROM users WHERE userid=${userID}`)).rows[0].current_order_price;
+    // // parse whole list in database
+  user_Order = user_Order.split(", ");
+  user_Order_Price = user_Order_Price.split(", ");
+
+  //remove element from list
+  for(let i = 0; i &lt; user_Order.length; ++i) {
+    if(user_Order.at(i) == fullUserOrder) {
+      user_Order.splice(i, 1);
+      user_Order_Price.splice(i, 1); // also remove the corresponding price
+      break;
+    }
+  }
+  // join back into one string
+  user_Order = user_Order.join(', ');
+  user_Order_Price = user_Order_Price.join(', ');
+  console.log("user order after removing: "  + user_Order);
+  console.log("user order Price after removing: "  + user_Order_Price);
+
+  // // Then query to replace current order &amp; price in the database with the modified order
+  pool.query("UPDATE users SET current_order =" + "'" + user_Order + "'" + " WHERE userid = "+ userID, (err, result) => {
+    if(err) {
+      return console.log(err);
+    };
+  });
+  pool.query("UPDATE users SET current_order_price =" + "'" + user_Order_Price + "'" + " WHERE userid = "+ userID, (err, result) => {
+    if(err) {
+      return console.log(err);
+    };
+    res.status(200).json({message: "Successfully removed item!"});
+  });
+
+})
+
+
+
+module.exports = router;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Help.html">Help</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-MenuItem.html">MenuItem</a></li><li><a href="module-NavBar.html">NavBar</a></li><li><a href="module-OrderReportCard.html">OrderReportCard</a></li><li><a href="module-Register.html">Register</a></li><li><a href="module-Settings.html">Settings</a></li><li><a href="module-UserMenu.html">UserMenu</a></li><li><a href="module-addMenuItem.html">addMenuItem</a></li><li><a href="module-adjustMenu.html">adjustMenu</a></li><li><a href="module-adjustableMenuItemCard.html">adjustableMenuItemCard</a></li><li><a href="module-authActions.html">authActions</a></li><li><a href="module-authReducers.html">authReducers</a></li><li><a href="module-bag.html">bag</a></li><li><a href="module-bagCard.html">bagCard</a></li><li><a href="module-dbInstance.html">dbInstance</a></li><li><a href="module-errorReducers.html">errorReducers</a></li><li><a href="module-findStore.html">findStore</a></li><li><a href="module-indexReducers.html">indexReducers</a></li><li><a href="module-landing.html">landing</a></li><li><a href="module-menu.html">menu</a></li><li><a href="module-menuItemCard.html">menuItemCard</a></li><li><a href="module-orderItemCard.html">orderItemCard</a></li><li><a href="module-orders.html">orders</a></li><li><a href="module-processOrders.html">processOrders</a></li><li><a href="module-reportItemCard.html">reportItemCard</a></li><li><a href="module-reports.html">reports</a></li><li><a href="module-restockReportCard.html">restockReportCard</a></li><li><a href="module-translator.html">translator</a></li><li><a href="module-types.html">types</a></li><li><a href="module-user.html">user</a></li><li><a href="module-userCard.html">userCard</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#PrivateCashierRoute">PrivateCashierRoute</a></li><li><a href="global.html#PrivateManagerRoute">PrivateManagerRoute</a></li><li><a href="global.html#PrivateOnlineUserRoute">PrivateOnlineUserRoute</a></li><li><a href="global.html#PrivateUserRoute">PrivateUserRoute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Dec 06 2022 19:58:14 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

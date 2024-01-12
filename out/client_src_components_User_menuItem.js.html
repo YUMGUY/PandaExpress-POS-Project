@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: client/src/components/User/menuItem.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: client/src/components/User/menuItem.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * A module that creates a React Card for each menu item passed in
+ * @module MenuItem
+ */
+
+import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import { Container, Spinner, Table, Card, Button, CardGroup, Modal } from "react-bootstrap";
+import bowl from "./images/bowlnobg.png";
+import plate from "./images/pandaPlate.png";
+import eggroll from "./images/eggrolls.png";
+import drinkImg from './images/drinks.png';
+import bigger from './images/biggerplate.png';
+import Col from 'react-bootstrap/Col';
+import Row from 'react-bootstrap/Row';
+import Form from 'react-bootstrap/Form';
+import UserCard from '../Cards/userCard';
+
+
+import axios from "axios";
+import React from "react";
+
+/**
+ * A function that creates and returns a React Card element that a user can use to increment or decrement items they wish to add to their bag.
+ * @param {Object} props - An Object with information about a menu item 
+ * @returns {Object} - an Object with the react html for the card
+ */
+function MenuItem(props) {
+    const [count, setCount] = useState(0);
+    const [dis, setDisabled] = useState(false);
+
+    const dec = () => {
+        if (count - 1 > -1) {
+
+            setCount(count - 1);
+            props.function(props.current - 1);
+            
+
+            
+        }
+    }
+    const inc = () => {
+        
+        setCount(count + 1);
+        props.function(props.current + 1);
+        setDisabled(props.current > props.max);
+        props.setbag([...props.bag, props.item]);
+        props.setprice([...props.price, props.itemPrice])
+    }
+    useEffect(() => {
+        setDisabled((props.current >= props.max));
+        console.log(props.bag);
+      }, [props.current]);
+    
+
+    return (
+        &lt;div>
+            &lt;Card body>
+                &lt;div style={{float: 'left'}}>
+                    {props.item}
+                &lt;/div>
+                &lt;div style={{float: 'right', width: '100px'}}>
+                    &lt;Button onClick={() => dec()} style={{marginRight: '10px'}}>
+                        -
+                    &lt;/Button>
+                    
+                    {count}
+                    
+                    
+                    &lt;Button onClick={() => inc()} disabled={dis} style={{marginLeft: '10px'}}>
+                        +
+                    &lt;/Button>
+                &lt;/div>
+                
+            &lt;/Card>
+        &lt;/div>
+    );
+}
+
+MenuItem.propTypes = {
+    auth: PropTypes.object.isRequired,
+};
+
+const mapStateToProps = (state) => ({
+    auth: state.auth,
+});
+
+export default connect(mapStateToProps)(MenuItem);
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Help.html">Help</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-MenuItem.html">MenuItem</a></li><li><a href="module-NavBar.html">NavBar</a></li><li><a href="module-OrderReportCard.html">OrderReportCard</a></li><li><a href="module-Register.html">Register</a></li><li><a href="module-Settings.html">Settings</a></li><li><a href="module-UserMenu.html">UserMenu</a></li><li><a href="module-addMenuItem.html">addMenuItem</a></li><li><a href="module-adjustMenu.html">adjustMenu</a></li><li><a href="module-adjustableMenuItemCard.html">adjustableMenuItemCard</a></li><li><a href="module-authActions.html">authActions</a></li><li><a href="module-authReducers.html">authReducers</a></li><li><a href="module-bag.html">bag</a></li><li><a href="module-bagCard.html">bagCard</a></li><li><a href="module-dbInstance.html">dbInstance</a></li><li><a href="module-errorReducers.html">errorReducers</a></li><li><a href="module-findStore.html">findStore</a></li><li><a href="module-indexReducers.html">indexReducers</a></li><li><a href="module-landing.html">landing</a></li><li><a href="module-menu.html">menu</a></li><li><a href="module-menuItemCard.html">menuItemCard</a></li><li><a href="module-orderItemCard.html">orderItemCard</a></li><li><a href="module-orders.html">orders</a></li><li><a href="module-processOrders.html">processOrders</a></li><li><a href="module-reportItemCard.html">reportItemCard</a></li><li><a href="module-reports.html">reports</a></li><li><a href="module-restockReportCard.html">restockReportCard</a></li><li><a href="module-translator.html">translator</a></li><li><a href="module-types.html">types</a></li><li><a href="module-user.html">user</a></li><li><a href="module-userCard.html">userCard</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#PrivateCashierRoute">PrivateCashierRoute</a></li><li><a href="global.html#PrivateManagerRoute">PrivateManagerRoute</a></li><li><a href="global.html#PrivateOnlineUserRoute">PrivateOnlineUserRoute</a></li><li><a href="global.html#PrivateUserRoute">PrivateUserRoute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Dec 06 2022 19:58:14 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: client/src/components/User/bag.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: client/src/components/User/bag.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * A module that keeps track of a user's current order and displays all items in a React component. Allows users to edit their order or submit their order to the database.
+ * @module bag
+ */
+import { Container, Button, Nav, CardGroup, Card, Spinner, Alert } from "react-bootstrap";
+import { useSpring, animated } from "react-spring";
+import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import BagItemCard from "../Cards/bagCard";
+import { useHistory } from "react-router-dom";
+
+/**
+ * A function that creates and returns a react component for the user bag. Employes the bagCard module to give each item its own React Card.
+ * @param {Object} props - the decoded user payload
+ * @returns {Object} - The html for the react component
+ */
+function Bag(props) {
+  const history = useHistory();
+  const [isLoading, setLoading] = useState([]);
+  const [bagEmpty, setBagEmpty] = useState(false);
+  const [userCurrentOrder, setUserCurrentOrder] = useState([]);
+  const [total, setTotal] = useState(0.0);
+  const [screenText, setScreenText] = useState({});
+  const [message, setMessage] = useState();
+
+
+  useEffect(() => {
+
+    if(localStorage.getItem("translation") != null){
+      setScreenText(JSON.parse(localStorage.getItem("translation")));
+    }else{
+      setScreenText(props.auth.user.screenText);
+    }
+
+    axios.get("/users/getCurrentOrder", {
+      params: {
+        userID: props.auth.user.id
+      }
+    }).then((res) => {
+      console.log(res.data);
+      if(res.data.current_order === ""){
+        setLoading(false);
+        setBagEmpty(true);
+        return;
+      }
+      const currentOrder = res.data.current_order.split(", ");
+      
+      const currentOrderPrice = res.data.current_order_price.split(", ");
+      console.log(currentOrder);
+      console.log(currentOrderPrice);
+      const list = [];
+      for(let k = 0; k &lt; currentOrder.length; k++){
+        const temp = {name: currentOrder[k], cost: currentOrderPrice[k]};
+        console.log(temp);
+        list.push(temp);
+      }
+      setUserCurrentOrder(list);
+
+      setLoading(false);
+    });
+
+  }, []);
+  useEffect(async () => {
+    await axios.get("/orders/getOrderPrice", {params:{userID: props.auth.user.id}}).then(res => {
+         let price = res.data.current_order_price.split(", ");
+         let totalPrice = 0;
+         price.forEach((p) => {
+             if (p != "") {
+                 totalPrice += parseFloat(p);
+             }
+         })
+         setTotal(totalPrice);
+     }) 
+     
+ });
+
+  function AddItemsToBag() {
+    const list = [];
+    //console.log(userCurrentOrder);
+    for(let i = 0; i &lt; userCurrentOrder.length; ++i) {
+
+      const listOfItems = userCurrentOrder.at(i).name.split("; ");
+      const listOfPrices = userCurrentOrder.at(i).cost.split("; ");
+      //console.log(listOfItems);
+      // console.log(listOfPrices);
+      let bagItem = &lt;BagItemCard key = {listOfItems[0]}
+                                  fullOrder = {userCurrentOrder.at(i).name} // passes in the name with semi colons
+                                  item = {listOfItems}
+                                  cost = {listOfPrices}
+                                  userid = {props.auth.user.id} // now call
+                                  />
+        
+      list.push(bagItem);
+
+      
+    }
+    return list;
+  }
+  
+  function submitBagOrder() { // ADD CHECK where user cannot submit order without having at least 1 item in the bag
+
+    if(userCurrentOrder.length == 0) {
+      console.log("Cannot submit an empty bag");
+      setMessage("Cannot submit an empty bag")
+      setTimeout(() => {
+        setMessage(null);
+      }, 5000);
+      return
+    }
+    axios.post("/orders/submitOrder", {
+      params: {
+        order: userCurrentOrder,
+        employeeID: props.auth.user.id,
+      }
+    })
+    .then((res) => {
+      // empty bag in the website
+      setUserCurrentOrder([])
+      console.log(res.data)
+      history.push("/menu", {message: "Successfully submitted order! Wait next to the pickup counter to get your food!", variant:"success"});
+
+    })    
+  }
+
+
+  return (
+  
+      &lt;div className="Bag">
+        {isLoading ? (
+          &lt;div className="d-flex justify-content-center">
+            &lt;Spinner animation="border" />
+          &lt;/div>
+        ) : (
+          &lt;React.Fragment>
+            {bagEmpty ? (
+              &lt;React.Fragment>
+                &lt;h2 className="display-2 text-center">{screenText["Your Bag is Empty!"]}&lt;/h2>
+                {message &amp;&amp; (
+                  &lt;React.Fragment>
+                    &lt;Alert className="text-center" variant="danger">
+                      {message}
+                    &lt;/Alert>
+                    &lt;br>&lt;/br>
+                  &lt;/React.Fragment>
+                )}
+              &lt;/React.Fragment>
+            ): (
+              &lt;React.Fragment>
+                &lt;h2 className="display-2 text-center"> {screenText["Your Order"]} &lt;/h2>
+                
+              &lt;div style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
+                {AddItemsToBag()}
+              &lt;/div>
+              
+              
+            &lt;/React.Fragment>
+            )}
+            &lt;br>&lt;/br>&lt;br>&lt;/br>&lt;br>&lt;/br>&lt;br>&lt;/br>&lt;br>&lt;/br>&lt;br>&lt;/br>&lt;br>&lt;/br>&lt;br>&lt;/br>&lt;br>&lt;/br>
+          &lt;/React.Fragment>
+      )
+    }
+    &lt;div style={{position: 'fixed', bottom: '0', width: '100%'}}>
+                &lt;Card>
+                    &lt;div style={{padding: '20px',}}>
+                        &lt;Card.Text style={{float:'right'}}>
+                            &lt;div style={{textAlign: 'center', justifyContent: 'center'}}>
+                                &lt;div style={{marginRight: '25px', display: 'inline-block', fontSize: '20px'}}>
+                                    {screenText["Total"]}: ${total}
+                                &lt;/div>
+                                &lt;div style={{display: 'inline-block'}}>
+                                    &lt;Button variant="primary" type="submit" onClick={() => submitBagOrder()}>{screenText["Submit Order"]}&lt;/Button>
+                                &lt;/div>
+                            &lt;/div>
+                            
+                        &lt;/Card.Text>
+                        
+                    &lt;/div>
+                &lt;/Card>
+            &lt;/div>
+    &lt;/div>
+    );
+
+
+}
+
+
+Bag.propTypes = {
+  auth: PropTypes.object.isRequired,
+};
+
+const mapStateToProps = (state) => ({
+  auth: state.auth,
+});
+
+export default connect(mapStateToProps)(Bag);</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Help.html">Help</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-MenuItem.html">MenuItem</a></li><li><a href="module-NavBar.html">NavBar</a></li><li><a href="module-OrderReportCard.html">OrderReportCard</a></li><li><a href="module-Register.html">Register</a></li><li><a href="module-Settings.html">Settings</a></li><li><a href="module-UserMenu.html">UserMenu</a></li><li><a href="module-addMenuItem.html">addMenuItem</a></li><li><a href="module-adjustMenu.html">adjustMenu</a></li><li><a href="module-adjustableMenuItemCard.html">adjustableMenuItemCard</a></li><li><a href="module-authActions.html">authActions</a></li><li><a href="module-authReducers.html">authReducers</a></li><li><a href="module-bag.html">bag</a></li><li><a href="module-bagCard.html">bagCard</a></li><li><a href="module-dbInstance.html">dbInstance</a></li><li><a href="module-errorReducers.html">errorReducers</a></li><li><a href="module-findStore.html">findStore</a></li><li><a href="module-indexReducers.html">indexReducers</a></li><li><a href="module-landing.html">landing</a></li><li><a href="module-menu.html">menu</a></li><li><a href="module-menuItemCard.html">menuItemCard</a></li><li><a href="module-orderItemCard.html">orderItemCard</a></li><li><a href="module-orders.html">orders</a></li><li><a href="module-processOrders.html">processOrders</a></li><li><a href="module-reportItemCard.html">reportItemCard</a></li><li><a href="module-reports.html">reports</a></li><li><a href="module-restockReportCard.html">restockReportCard</a></li><li><a href="module-translator.html">translator</a></li><li><a href="module-types.html">types</a></li><li><a href="module-user.html">user</a></li><li><a href="module-userCard.html">userCard</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#PrivateCashierRoute">PrivateCashierRoute</a></li><li><a href="global.html#PrivateManagerRoute">PrivateManagerRoute</a></li><li><a href="global.html#PrivateOnlineUserRoute">PrivateOnlineUserRoute</a></li><li><a href="global.html#PrivateUserRoute">PrivateUserRoute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Dec 06 2022 19:58:14 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

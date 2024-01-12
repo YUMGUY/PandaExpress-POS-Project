@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: client/src/components/Cards/adjustableMenuItemCard.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: client/src/components/Cards/adjustableMenuItemCard.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Module to create a card that can adjust items on our menu
+ * @module adjustableMenuItemCard
+ */
+import { Container, Button, Card } from "react-bootstrap";
+import { connect } from "react-redux";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+/**
+ * A function that creates and return a React Card element with an item's price, stock, and update fields for each
+ * @param {Object} props - An Object with all relevant information about a menu item
+ * @returns React Card element
+ */
+function AdjustableMenuItemCard(props) {
+
+  const [itemPrice, newPrice] = useState(0);
+  const [itemStock, newStock] = useState(0);
+
+  const updatePrice = () => {
+    axios.post("/menu/updatePrice", {
+      params: {
+        price: itemPrice,
+        name: props.name,
+      }
+    })
+    .then((res) => {
+      // console.log(res.data)
+      window.location.reload();
+    })
+  }
+
+  const updateStock = () => {
+    axios.post("/menu/updateStock", {
+      params: {
+        stock: itemStock,
+        name: props.name,
+      }
+    })
+    .then((res) => {
+      // console.log(res.data)
+      window.location.reload();
+    })
+  }
+
+  const removeItem = () => {
+    axios.post("/menu/removeItem", {
+      params: {
+        itemToRemove: props.name
+      }
+    })
+    .then((res) => {
+      window.location.reload();
+    })
+  }
+
+    return (
+  &lt;div className="AdjustableMenuItemCard">
+      &lt;Container>
+        &lt;Card
+          border={"success"}
+          style={{ borderWidth: "5px" }}
+          className="p-2 m-2 rounded shadow"
+        >
+          &lt;Card.Body>
+            &lt;Card.Title>{props.name}&lt;/Card.Title>
+            &lt;br>&lt;/br>
+
+            &lt;div class="input-group mb-3">
+              &lt;div class="input-group-prepend">
+                &lt;span class="input-group-text">$&lt;/span>
+              &lt;/div>
+              &lt;input type="text" class="form-control" placeholder={props.cost} id="cost" aria-describedby="basic-addon1" onChange={(e) => newPrice(e.target.value)}>
+              &lt;/input>
+              &lt;div class="input-group-append">
+                &lt;Button class="btn btn-outline-secondary" type="button" id="button-addon2" onClick={() => updatePrice()}>Update&lt;/Button>
+              &lt;/div>
+            &lt;/div>
+            &lt;br>&lt;/br>
+
+            &lt;div class="input-group mb-3">
+                &lt;div class="input-group-prepend">
+                  &lt;span class="input-group-text">Amount&lt;/span>
+                &lt;/div>
+              &lt;input type="text" class="form-control" placeholder={props.amount} aria-describedby="basic-addon1" onChange={(e) => newStock(e.target.value)}>
+              &lt;/input>
+              &lt;div class="input-group-append">
+                &lt;Button class="btn btn-outline-secondary" type="button" id="button-addon2" onClick={() => updateStock()}>Update&lt;/Button>
+              &lt;/div>
+            &lt;/div>
+            &lt;br>&lt;/br>
+
+            &lt;div class="input-group-append">
+                &lt;Button class="btn btn-outline-secondary" type="button" id="button-addon2" onClick={() => removeItem()}>Remove Item&lt;/Button>
+            &lt;/div>
+          &lt;/Card.Body>
+        &lt;/Card>
+      &lt;/Container>
+    &lt;/div>
+  )
+}
+
+export default AdjustableMenuItemCard;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Help.html">Help</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-MenuItem.html">MenuItem</a></li><li><a href="module-NavBar.html">NavBar</a></li><li><a href="module-OrderReportCard.html">OrderReportCard</a></li><li><a href="module-Register.html">Register</a></li><li><a href="module-Settings.html">Settings</a></li><li><a href="module-UserMenu.html">UserMenu</a></li><li><a href="module-addMenuItem.html">addMenuItem</a></li><li><a href="module-adjustMenu.html">adjustMenu</a></li><li><a href="module-adjustableMenuItemCard.html">adjustableMenuItemCard</a></li><li><a href="module-authActions.html">authActions</a></li><li><a href="module-authReducers.html">authReducers</a></li><li><a href="module-bag.html">bag</a></li><li><a href="module-bagCard.html">bagCard</a></li><li><a href="module-dbInstance.html">dbInstance</a></li><li><a href="module-errorReducers.html">errorReducers</a></li><li><a href="module-findStore.html">findStore</a></li><li><a href="module-indexReducers.html">indexReducers</a></li><li><a href="module-landing.html">landing</a></li><li><a href="module-menu.html">menu</a></li><li><a href="module-menuItemCard.html">menuItemCard</a></li><li><a href="module-orderItemCard.html">orderItemCard</a></li><li><a href="module-orders.html">orders</a></li><li><a href="module-processOrders.html">processOrders</a></li><li><a href="module-reportItemCard.html">reportItemCard</a></li><li><a href="module-reports.html">reports</a></li><li><a href="module-restockReportCard.html">restockReportCard</a></li><li><a href="module-translator.html">translator</a></li><li><a href="module-types.html">types</a></li><li><a href="module-user.html">user</a></li><li><a href="module-userCard.html">userCard</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#PrivateCashierRoute">PrivateCashierRoute</a></li><li><a href="global.html#PrivateManagerRoute">PrivateManagerRoute</a></li><li><a href="global.html#PrivateOnlineUserRoute">PrivateOnlineUserRoute</a></li><li><a href="global.html#PrivateUserRoute">PrivateUserRoute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Dec 06 2022 19:58:14 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

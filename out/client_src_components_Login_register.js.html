@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: client/src/components/Login/register.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: client/src/components/Login/register.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * A module that creates and returns a React component that users use to register for an account.
+ * @module Register
+ */
+
+import { useState, useEffect } from "react";
+import { useHistory, Link, withRouter } from "react-router-dom";
+import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import { registerUser } from "../../actions/authActions";
+import { Form, Button, Container, Row, Col } from "react-bootstrap";
+import classnames from "classnames";
+
+/**
+ * A function that formats and returns a React component for people to use as they register for their accounts.
+ * @param {Object} props - the decoded user payload
+ * @returns {Object} - The html for the react component
+ */
+function Register(props) {
+  const [fname, setfName] = useState("");
+  const [lname, setlName] = useState("");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+  const [error, setError] = useState({});
+  const history = useHistory();
+
+  useEffect(() => {
+    if (props.auth.isAuthenticated) {
+      history.push("/");
+    }
+  }, [history, props.auth, props.auth.isAuthenticated]);
+
+  useEffect(() => {
+    setError(props.errors);
+  }, [props.errors]);
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    const newUser = {
+      fname: fname,
+      lname: lname,
+      email: email,
+      username: username,
+      password: password,
+      password2: password2,
+    };
+    props.registerUser(newUser, history);
+  };
+
+  return (
+    &lt;div className="Register">
+      &lt;Container>
+        &lt;h2 className="display-2 text-center">Register&lt;/h2>
+        &lt;Form noValidate onSubmit={onSubmit}>
+          &lt;Row>
+            &lt;Col>
+              &lt;Form.Group className="mb-3">
+                &lt;Form.Label>
+                  &lt;b>First name&lt;/b>
+                &lt;/Form.Label>
+                &lt;Form.Control
+                  onChange={(e) => setfName(e.target.value)}
+                  required
+                  value={fname}
+                  isInvalid={error.name}
+                  id="fname"
+                  type="text"
+                  className={classnames("", {
+                    invalid: error.name,
+                  })}
+                />
+                &lt;Form.Control.Feedback type="invalid">
+                  {error.name}
+                &lt;/Form.Control.Feedback>
+              &lt;/Form.Group>
+            &lt;/Col>
+            &lt;Col>
+              &lt;Form.Group className="mb-3">
+                &lt;Form.Label>
+                  &lt;b>Last name&lt;/b>
+                &lt;/Form.Label>
+                &lt;Form.Control
+                  onChange={(e) => setlName(e.target.value)}
+                  required
+                  value={lname}
+                  isInvalid={error.name}
+                  id="lname"
+                  type="text"
+                  className={classnames("", {
+                    invalid: error.name,
+                  })}
+                />
+                &lt;Form.Control.Feedback type="invalid">
+                  {error.name}
+                &lt;/Form.Control.Feedback>
+              &lt;/Form.Group>
+            &lt;/Col>
+          &lt;/Row>
+          &lt;Form.Group className="mb-3">
+            &lt;Form.Label>
+              &lt;b>Email Address&lt;/b>
+            &lt;/Form.Label>
+            &lt;Form.Control
+              onChange={(e) => setEmail(e.target.value)}
+              value={email}
+              isInvalid={!!error.registerEmail}
+              id="email"
+              type="email"
+              className={classnames("", {
+                invalid: error.registerEmail,
+              })}
+            />
+            &lt;Form.Control.Feedback type="invalid">
+              {error.registerEmail}
+            &lt;/Form.Control.Feedback>
+          &lt;/Form.Group>
+          &lt;Form.Group className="mb-3">
+            &lt;Form.Label>
+              &lt;b>Username&lt;/b>
+            &lt;/Form.Label>
+            &lt;Form.Control
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              value={username}
+              isInvalid={!!error.registerUsername}
+              id="username"
+              type="text"
+              className={classnames("", {
+                invalid: error.registerUsername,
+              })}
+            />
+            &lt;Form.Control.Feedback type="invalid">
+              {error.registerUsername}
+            &lt;/Form.Control.Feedback>
+          &lt;/Form.Group>
+          &lt;Form.Group className="mb-3">
+            &lt;Form.Label>
+              &lt;b>Password&lt;/b>
+            &lt;/Form.Label>
+            &lt;Form.Control
+              onChange={(e) => setPassword(e.target.value)}
+              value={password}
+              isInvalid={error.registerPassword}
+              id="password"
+              type="password"
+              className={classnames("", {
+                invalid: error.registerPassword,
+              })}
+            />
+            &lt;Form.Control.Feedback type="invalid">
+              {error.registerPassword}
+            &lt;/Form.Control.Feedback>
+          &lt;/Form.Group>
+          &lt;Form.Group className="mb-3">
+            &lt;Form.Label>
+              &lt;b>Confirm Password&lt;/b>
+            &lt;/Form.Label>
+            &lt;Form.Control
+              onChange={(e) => setPassword2(e.target.value)}
+              value={password2}
+              isInvalid={error.registerPassword2}
+              id="password2"
+              type="password"
+              className={classnames("", {
+                invalid: error.registerPassword2,
+              })}
+            />
+            &lt;Form.Control.Feedback type="invalid">
+              {error.registerPassword2}
+            &lt;/Form.Control.Feedback>
+          &lt;/Form.Group>
+          &lt;Button variant="primary" type="submit">
+            Register
+          &lt;/Button>
+        &lt;/Form>
+        &lt;div className="text-center">
+          &lt;p className="fs-5">
+            Already have an account? &lt;Link to="/login">Login here!&lt;/Link>
+          &lt;/p>
+        &lt;/div>
+      &lt;/Container>
+    &lt;/div>
+  );
+}
+
+Register.propTypes = {
+  registerUser: PropTypes.func.isRequired,
+  auth: PropTypes.object.isRequired,
+  errors: PropTypes.object.isRequired,
+};
+
+const mapStateToProps = (state) => ({
+  auth: state.auth,
+  errors: state.errors,
+});
+
+export default connect(mapStateToProps, { registerUser })(withRouter(Register));
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Help.html">Help</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-MenuItem.html">MenuItem</a></li><li><a href="module-NavBar.html">NavBar</a></li><li><a href="module-OrderReportCard.html">OrderReportCard</a></li><li><a href="module-Register.html">Register</a></li><li><a href="module-Settings.html">Settings</a></li><li><a href="module-UserMenu.html">UserMenu</a></li><li><a href="module-addMenuItem.html">addMenuItem</a></li><li><a href="module-adjustMenu.html">adjustMenu</a></li><li><a href="module-adjustableMenuItemCard.html">adjustableMenuItemCard</a></li><li><a href="module-authActions.html">authActions</a></li><li><a href="module-authReducers.html">authReducers</a></li><li><a href="module-bag.html">bag</a></li><li><a href="module-bagCard.html">bagCard</a></li><li><a href="module-dbInstance.html">dbInstance</a></li><li><a href="module-errorReducers.html">errorReducers</a></li><li><a href="module-findStore.html">findStore</a></li><li><a href="module-indexReducers.html">indexReducers</a></li><li><a href="module-landing.html">landing</a></li><li><a href="module-menu.html">menu</a></li><li><a href="module-menuItemCard.html">menuItemCard</a></li><li><a href="module-orderItemCard.html">orderItemCard</a></li><li><a href="module-orders.html">orders</a></li><li><a href="module-processOrders.html">processOrders</a></li><li><a href="module-reportItemCard.html">reportItemCard</a></li><li><a href="module-reports.html">reports</a></li><li><a href="module-restockReportCard.html">restockReportCard</a></li><li><a href="module-translator.html">translator</a></li><li><a href="module-types.html">types</a></li><li><a href="module-user.html">user</a></li><li><a href="module-userCard.html">userCard</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#PrivateCashierRoute">PrivateCashierRoute</a></li><li><a href="global.html#PrivateManagerRoute">PrivateManagerRoute</a></li><li><a href="global.html#PrivateOnlineUserRoute">PrivateOnlineUserRoute</a></li><li><a href="global.html#PrivateUserRoute">PrivateUserRoute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Dec 06 2022 19:58:14 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

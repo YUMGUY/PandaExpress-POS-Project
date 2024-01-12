@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: client/src/components/Cashier/processOrders.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: client/src/components/Cashier/processOrders.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * A module that returns React HTML for a page that cashiers and managers can use to process orders as customers come up to them in real time
+ * @module processOrders
+ */
+
+import { Container, Button, Nav, FormFloating, Spinner } from "react-bootstrap";
+import { useSpring, animated } from "react-spring";
+import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import MenuItemCard from "../Cards/menuItemCard";
+import OrderItemCard from "../Cards/orderItemCard";
+
+/**
+ * This function creates a page for cashiers and managers to use to process orders in real time.
+ * @param {Object} props - the decoded user payload
+ * @returns {Object} - The html for the react component
+ * 
+ */
+function Cashier(props) {
+  const [loading, setLoading] = useState(true);
+  const [sizes, setSizes] = useState([]);
+  const [entrees, setEntrees] = useState([]);
+  const [sides, setSides] = useState([]);
+  const [appetizers, setAppetizers] = useState([]);
+  const [drinks, setDrinks] = useState([]);
+  const [order, setOrder] = useState([]);
+  const [orderHTML, setOrderHTML] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [currentTab, setCurrentTab] = useState("Plate Sizes");
+  const employeeID = props.auth.user.id;
+
+  const formatter = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+
+  useEffect(() => {
+    axios.get("/menu/getAllMenuItems")
+    .then((res) => {
+      sortItems(res.data);
+      setLoading(false);
+    })
+    .catch((err) => {console.log(err)});
+  }, []);
+
+  const springProps = useSpring({
+    to: { opacity: 1 },
+    from: { opacity: 0 },
+    delay: 100,
+  });
+
+  function addToOrder(item) {
+    let tempOrder = order;
+
+    tempOrder.push(item);
+    setOrder(tempOrder);
+    loadOrderHTML(order);
+    console.log(order);
+  }
+
+  function removeFromOrder(item) {
+    let tempOrder = order;
+
+    tempOrder.every((orderItem, i) => {
+      if (orderItem.name == item.name) {
+        tempOrder.splice(i, 1);
+        return false;
+      }
+
+      return true;
+    });
+
+    setOrder(tempOrder);
+    loadOrderHTML(order);
+    console.log(order);
+  }
+
+  function sortItems(menuData) {
+    const tempEntrees = [];
+    const tempSizes = [];
+    const tempSides = [];
+    const tempDrinks = [];
+    const tempApps = [];
+
+    menuData.forEach((item) => {
+      let tempCard = &lt;MenuItemCard key={item.item}
+                        name={item.item}
+                        cost={item.cost}
+                        addToOrder={addToOrder}
+                        removeFromOrder={removeFromOrder}
+                      />
+
+      if (item.item_type == "entree") {tempEntrees.push(tempCard);}
+      else if (item.item_type == "size") {tempSizes.push(tempCard);}
+      else if (item.item_type == "side") {tempSides.push(tempCard);}
+      else if (item.item_type == "drink") {tempDrinks.push(tempCard);}
+      else if (item.item_type == "appetizer") {tempApps.push(tempCard);}
+    })
+    
+    setEntrees(tempEntrees);
+    setDrinks(tempDrinks);
+    setSizes(tempSizes);
+    setSides(tempSides);
+    setAppetizers(tempApps);
+  }
+
+  function loadOrderHTML(order) {
+    let total = 0
+    let orderHTML = []
+
+    order.forEach((item) => {
+      let tempCard = &lt;OrderItemCard
+                      name={item.name}
+                      cost={item.cost}
+                      removeFromOrder={removeFromOrder}
+                    />
+      total += item.cost;
+      orderHTML.push(tempCard);
+    })
+
+    setTotal(total);
+    setOrderHTML(orderHTML);
+  }
+
+  function loadCurrentTab(currentTab) {
+    if (currentTab == "Plate Sizes") {return sizes;}
+    else if (currentTab == "Sides") {return sides;}
+    else if (currentTab == "Proteins") {return entrees;}
+    else if (currentTab == "Appetizers") {return appetizers;}
+    else if (currentTab == "Drinks") {return drinks;}
+  }
+
+  function submitOrder() {
+    console.log(order);
+    axios.post("/orders/submitOrderCashier", {
+      params: {
+        order: order,
+        employeeID: employeeID
+      }
+    })
+    .then((res) => {
+      console.log(res.data);
+      setOrder([]);
+      window.location.reload();
+    })
+  }
+
+  return (
+    &lt;div className="Cashier">
+      {loading ? (
+        &lt;React.Fragment>
+          &lt;br>&lt;/br>
+          &lt;br>&lt;/br>
+          &lt;br>&lt;/br>
+          &lt;br>&lt;/br>
+            &lt;div className="d-flex justify-content-center">
+              &lt;Spinner animation="border" />
+            &lt;/div>
+        &lt;/React.Fragment>
+      ) : (
+        &lt;React.Fragment>
+          &lt;br>&lt;/br>
+          &lt;h2 className="display-8 text-center">Process Orders&lt;/h2>
+          &lt;div style={{width: 75 + "%", height: 75+"vh", float: "left", color: "#FFFFFF", textAlign: "center", backgroundColor: "#C02827", borderRadius: 7+"px", margin: 1+"%"}}>
+            &lt;div style={{width: 20 + "%", float: "left", paddingTop: 7+"%" }}>
+              &lt;Button style={{width: 70+"%", height: 10+"vh", borderRadius: 7+"px", margin: 2+"px"}} variant="dark" onClick={() => {setCurrentTab("Plate Sizes")}}>Plate Sizes&lt;/Button>
+              &lt;Button style={{width: 70+"%", height: 10+"vh", borderRadius: 7+"px", margin: 2+"px"}} variant="dark" onClick={() => {setCurrentTab("Sides")}}>Sides&lt;/Button>
+              &lt;Button style={{width: 70+"%", height: 10+"vh", borderRadius: 7+"px", margin: 2+"px"}} variant="dark" onClick={() => {setCurrentTab("Proteins")}}>Proteins&lt;/Button>
+              &lt;Button style={{width: 70+"%", height: 10+"vh", borderRadius: 7+"px", margin: 2+"px"}} variant="dark" onClick={() => {setCurrentTab("Appetizers")}}>Appetizers&lt;/Button>
+              &lt;Button style={{width: 70+"%", height: 10+"vh", borderRadius: 7+"px", margin: 2+"px"}} variant="dark" onClick={() => {setCurrentTab("Drinks")}}>Drinks&lt;/Button>
+            &lt;/div>
+            &lt;div style={{width: 75 + "%", float: "left", textAlign: "center", backgroundColor: "#C02827", borderRadius: 7+"px", margin: 1+"%", overflow: "auto"}}>
+              &lt;h4 style={{paddingTop: 10+"px", color: "#FFFFFF", margin: 5+"px"}}className="text-center">{currentTab}:&lt;/h4>
+              &lt;div style={{height: 60+"vh" , overflowY: "scroll"}}>{loadCurrentTab(currentTab)}&lt;/div>
+            &lt;/div>
+          &lt;/div>
+          &lt;div style={{width: 21 + "%", height: 75+"vh", float: "right", color: "#FFFFFF", backgroundColor: "#000000", borderRadius: 7+"px", margin: 1+"%"}}>
+            &lt;h4 style={{paddingTop: 10+"px"}} className="text-center">Current Order:&lt;/h4>
+            &lt;br>&lt;/br>
+            &lt;div style={{height: 50+"vh", overflowY: "scroll", margin: 1+"%"}}>{orderHTML}&lt;/div>
+            &lt;br>&lt;/br>
+            &lt;div>
+              &lt;h5 style={{float: "left", textAlign: "left", margin: 10+"px"}}>Total: {formatter.format(total)}&lt;/h5>
+              &lt;Button style={{float: "right", margin: 10+"px"}} variant="light" onClick={() => {submitOrder()}}>Submit Order&lt;/Button>
+            &lt;/div>
+          &lt;/div>
+        &lt;/React.Fragment>
+      )}
+    &lt;/div>
+  );
+}
+
+Cashier.propTypes = {
+  auth: PropTypes.object.isRequired,
+};
+
+const mapStateToProps = (state) => ({
+  auth: state.auth,
+});
+
+export default connect(mapStateToProps)(Cashier);
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Help.html">Help</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-MenuItem.html">MenuItem</a></li><li><a href="module-NavBar.html">NavBar</a></li><li><a href="module-OrderReportCard.html">OrderReportCard</a></li><li><a href="module-Register.html">Register</a></li><li><a href="module-Settings.html">Settings</a></li><li><a href="module-UserMenu.html">UserMenu</a></li><li><a href="module-addMenuItem.html">addMenuItem</a></li><li><a href="module-adjustMenu.html">adjustMenu</a></li><li><a href="module-adjustableMenuItemCard.html">adjustableMenuItemCard</a></li><li><a href="module-authActions.html">authActions</a></li><li><a href="module-authReducers.html">authReducers</a></li><li><a href="module-bag.html">bag</a></li><li><a href="module-bagCard.html">bagCard</a></li><li><a href="module-dbInstance.html">dbInstance</a></li><li><a href="module-errorReducers.html">errorReducers</a></li><li><a href="module-findStore.html">findStore</a></li><li><a href="module-indexReducers.html">indexReducers</a></li><li><a href="module-landing.html">landing</a></li><li><a href="module-menu.html">menu</a></li><li><a href="module-menuItemCard.html">menuItemCard</a></li><li><a href="module-orderItemCard.html">orderItemCard</a></li><li><a href="module-orders.html">orders</a></li><li><a href="module-processOrders.html">processOrders</a></li><li><a href="module-reportItemCard.html">reportItemCard</a></li><li><a href="module-reports.html">reports</a></li><li><a href="module-restockReportCard.html">restockReportCard</a></li><li><a href="module-translator.html">translator</a></li><li><a href="module-types.html">types</a></li><li><a href="module-user.html">user</a></li><li><a href="module-userCard.html">userCard</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#PrivateCashierRoute">PrivateCashierRoute</a></li><li><a href="global.html#PrivateManagerRoute">PrivateManagerRoute</a></li><li><a href="global.html#PrivateOnlineUserRoute">PrivateOnlineUserRoute</a></li><li><a href="global.html#PrivateUserRoute">PrivateUserRoute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Dec 06 2022 19:58:14 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

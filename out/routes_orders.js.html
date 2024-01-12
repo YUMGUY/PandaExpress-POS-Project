@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: routes/orders.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: routes/orders.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Order routes module. This module creates a router that can be used to connect to our database and interact with any data pertaining to orders.
+ * @module orders
+ */
+
+const express = require("express");
+
+/**
+ * A secure connection to the database
+ * Object
+ * @type {{connectionString: string}}
+ */
+const { pool } = require("../dbInstance");
+
+/**
+ * function to get and set database information relative to orders
+ * @returns {Object} different methods to view and change the database
+ */
+const router = express.Router();
+
+/**
+ * function to submit an order to the database for a user
+ * @param {string} order - a string containing all order items
+ * @param {number} employeeID - a number representing the employee who processed the order
+ * @param {number} userID - a number representing the user placing the order
+ * @returns {Object} A message object with a success message
+ */
+router.post("/submitOrder", async (req, res) => {
+  const order = req.body.params.order;
+  const employeeID = req.body.params.employeeID;
+  const userID = req.body.params.employeeID // should be 0 for guest
+
+  if (order.length == 0) {return console.log("Nothing in Order");}
+
+  let totalPrice = 0;
+  let allItems = "";
+  let allPrices = "";
+  let stockTracker = [];
+
+  order.forEach((orderItem, i) => {
+    // formatting sql strings
+    if (i &lt; order.length - 1) {
+      allItems += orderItem.name + ", ";
+      allPrices += orderItem.cost + ", ";
+    }
+    else {
+      allItems += orderItem.name;
+      allPrices += orderItem.cost;
+    }
+    if(orderItem.cost.includes(";")){
+      const tempList = orderItem.cost.split("; ");
+      tempList.forEach((p) => {
+        if(p != ""){
+          totalPrice += parseFloat(p);
+        }
+        
+      })
+    }else{  
+      totalPrice += parseFloat(orderItem.cost);
+    }
+    
+
+    // tracking stock quantities
+    if (stockTracker.every((item) => {
+      if (item.name == orderItem.name) {
+        item.quantity += 1;
+        return false;
+      }
+      return true;
+    })
+    ) {
+      stockTracker.push({
+        name: orderItem.name,
+        quantity: 1,
+      });
+    }
+  });
+
+  // getting local time
+  var tzoffset = (new Date()).getTimezoneOffset() * 60000;
+  var localDateString = (new Date(Date.now() - tzoffset)).toISOString().slice(0, 10);
+
+  let orderNo = (await pool.query("SELECT MAX(order_number) FROM orders")).rows[0].max + 1;
+  
+  // Submitting Order
+  let submitOrderCmd = "INSERT INTO orders (order_number, date, items, prices, total_price, employee_id) VALUES ";
+  let orderValues = "(" + orderNo + ", DATE '" + localDateString + "', '" + allItems + "', '" + allPrices + "', " + totalPrice + ", " + employeeID + ")";
+  await pool.query(submitOrderCmd + orderValues, (err, result) => {
+    if (err) {
+      return console.log('Error executing query', err.stack)
+    }
+    res.status(200).json({ message: "Successfully Submitted Order!" });
+  })
+
+  
+  // Updating stock values
+  async function updateStock(item) {
+    await pool.query("UPDATE menu_items SET stock = stock - " + item.quantity + " WHERE item = '" + item.name + "'");
+  }
+
+  stockTracker.forEach((item) => {
+    updateStock(item);
+  })
+
+  // update values for the user in the database
+  emptyBag(userID);
+})
+
+/**
+ * function to submit an order to the database for a cashier
+ * @param {string} order - a string containing all order items
+ * @param {number} employeeID - a number representing the employee who processed the order
+ * @param {number} userID - a number representing the user placing the order
+ * @returns {Object} A message object with a success message
+ */
+router.post("/submitOrderCashier", async (req, res) => {
+  const order = req.body.params.order;
+  const employeeID = req.body.params.employeeID;
+  const userID = req.body.params.employeeID // should be 0 for guest
+
+  if (order.length == 0) {return console.log("Nothing in Order");}
+
+  let totalPrice = 0;
+  let allItems = "";
+  let allPrices = "";
+  let stockTracker = [];
+
+  order.forEach((orderItem, i) => {
+    // formatting sql strings
+    if (i &lt; order.length - 1) {
+      allItems += orderItem.name + ", ";
+      allPrices += orderItem.cost + ", ";
+    }
+    else {
+      allItems += orderItem.name;
+      allPrices += orderItem.cost;
+    }
+    totalPrice += orderItem.cost;
+
+    // tracking stock quantities
+    if (stockTracker.every((item) => {
+      if (item.name == orderItem.name) {
+        item.quantity += 1;
+        return false;
+      }
+      return true;
+    })
+    ) {
+      stockTracker.push({
+        name: orderItem.name,
+        quantity: 1,
+      });
+    }
+  });
+
+  // getting local time
+  var tzoffset = (new Date()).getTimezoneOffset() * 60000;
+  var localDateString = (new Date(Date.now() - tzoffset)).toISOString().slice(0, 10);
+
+  let orderNo = (await pool.query("SELECT MAX(order_number) FROM orders")).rows[0].max + 1;
+  
+  // Submitting Order
+  let submitOrderCmd = "INSERT INTO orders (order_number, date, items, prices, total_price, employee_id) VALUES ";
+  let orderValues = "(" + orderNo + ", DATE '" + localDateString + "', '" + allItems + "', '" + allPrices + "', " + totalPrice + ", " + employeeID + ")";
+  await pool.query(submitOrderCmd + orderValues, (err) => {
+    if (err) {
+      return console.log('Error executing query', err.stack)
+    }
+    res.status(200).json({ message: "Successfully Submitted Order!" });
+  })
+
+  
+  // Updating stock values
+  async function updateStock(item) {
+    await pool.query("UPDATE menu_items SET stock = stock - " + item.quantity + " WHERE item = '" + item.name + "'");
+  }
+
+  stockTracker.forEach((item) => {
+    updateStock(item);
+  })
+
+  // update values for the user in the database
+  emptyBag(userID);
+})
+
+
+/**
+ * function to add an item to a user bag
+ * @param {string} order - a string containing all order items
+ * @param {number} userID - a number representing the user placing the order
+ * @param {number} price - the price of the item being added to the bag
+ * @returns {Object} An object with the updated user bag
+ */
+router.post("/SubmitToBag", async (req, res) => {
+  const order = req.body.params.order;
+  const userID = req.body.params.employeeID;
+  const price = req.body.params.price;
+  let newData;
+  let newPrice;
+
+  const oldData = (await pool.query("SELECT current_order from users WHERE userid=" + userID)).rows[0].current_order;
+  const oldPrice = (await pool.query("SELECT current_order_price from users WHERE userid=" + userID)).rows[0].current_order_price;
+  console.log(oldData); 
+  if(oldData === "") {
+    newData = order;
+    newPrice = price;
+  }
+  else {
+    newData = oldData + ", " + order;
+    newPrice = oldPrice + ", " + price;
+  }
+  
+  console.log(newData);
+  console.log(newPrice)
+
+  pool.query("UPDATE users SET current_order=" + "'" + newData + "', current_order_price='" + newPrice + "' WHERE userid=" + userID, (err, result) => {
+    if(err) {
+      return console.log(err);
+    }
+  });
+})
+
+function emptyBag(userID_) {
+  console.log("For user " + userID_ + ": bag is emptied");
+  pool.query(`UPDATE users SET current_order_price = 0 WHERE userid = ${userID_}`, (err, result) => {
+    if(err) {
+      return console.log(err);
+    }
+  });
+
+  pool.query(`UPDATE users SET current_order = '' WHERE userid = ${userID_}`, (err, result) => {
+    if(err) {
+      return console.log(err);
+    }
+   
+  });
+  return
+}
+
+router.get("/getOrderPrice", async (req, res) => {
+  const userID = req.query.userID;
+  pool.query(`SELECT current_order_price FROM users WHERE userid='${userID}'`, (err, result) => {
+      if (err) {
+          return console.log('Error executing query', err.stack)
+      }
+
+      res.json(result.rows[0]);
+  });
+});
+
+module.exports = router;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Help.html">Help</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-MenuItem.html">MenuItem</a></li><li><a href="module-NavBar.html">NavBar</a></li><li><a href="module-OrderReportCard.html">OrderReportCard</a></li><li><a href="module-Register.html">Register</a></li><li><a href="module-Settings.html">Settings</a></li><li><a href="module-UserMenu.html">UserMenu</a></li><li><a href="module-addMenuItem.html">addMenuItem</a></li><li><a href="module-adjustMenu.html">adjustMenu</a></li><li><a href="module-adjustableMenuItemCard.html">adjustableMenuItemCard</a></li><li><a href="module-authActions.html">authActions</a></li><li><a href="module-authReducers.html">authReducers</a></li><li><a href="module-bag.html">bag</a></li><li><a href="module-bagCard.html">bagCard</a></li><li><a href="module-dbInstance.html">dbInstance</a></li><li><a href="module-errorReducers.html">errorReducers</a></li><li><a href="module-findStore.html">findStore</a></li><li><a href="module-indexReducers.html">indexReducers</a></li><li><a href="module-landing.html">landing</a></li><li><a href="module-menu.html">menu</a></li><li><a href="module-menuItemCard.html">menuItemCard</a></li><li><a href="module-orderItemCard.html">orderItemCard</a></li><li><a href="module-orders.html">orders</a></li><li><a href="module-processOrders.html">processOrders</a></li><li><a href="module-reportItemCard.html">reportItemCard</a></li><li><a href="module-reports.html">reports</a></li><li><a href="module-restockReportCard.html">restockReportCard</a></li><li><a href="module-translator.html">translator</a></li><li><a href="module-types.html">types</a></li><li><a href="module-user.html">user</a></li><li><a href="module-userCard.html">userCard</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#PrivateCashierRoute">PrivateCashierRoute</a></li><li><a href="global.html#PrivateManagerRoute">PrivateManagerRoute</a></li><li><a href="global.html#PrivateOnlineUserRoute">PrivateOnlineUserRoute</a></li><li><a href="global.html#PrivateUserRoute">PrivateUserRoute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Dec 06 2022 19:58:14 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

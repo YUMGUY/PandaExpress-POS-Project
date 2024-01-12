@@ -1,0 +1,23 @@
+.hiddenRow {
+    padding: 0 !important;
+}
+  
+.dropdown {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid gray;
+    overflow-y: scroll;
+    height: 200px;
+}
+  
+.dropdown:empty {
+    border: none;
+    height: 0px;
+}
+  
+.dropdown-row {
+    cursor: pointer;
+    text-align: start;
+    margin: 2px 0;
+}

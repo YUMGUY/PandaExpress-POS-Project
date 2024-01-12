@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: client/src/components/User/help.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: client/src/components/User/help.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * A Module that creates a React Component with help instructions for anything any person may want to do on the application
+ * @module Help
+ */
+
+import { Container, Button, Nav, CardGroup, Card, Spinner, Alert, Table } from "react-bootstrap";
+import { useSpring, animated } from "react-spring";
+import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+import menuRedHighlight from "./images/menuRedHighlight.png";
+import menuItemSelect from "./images/menuItemSelect.png";
+import addToBag from "./images/addToBag.png"
+import languageBox from "./images/languageBox.png";
+import selectLanguage from "./images/selectLanguage.png";
+import saveSettings from "./images/saveSettings.png";
+
+import cashierSubmit from "./images/cashierSubmit.png";
+import cashierAdd from "./images/cashierAdd.png";
+import cashierEditItem from "./images/cashierEditItem.png";
+
+import "./tableStyle.css";
+
+/**
+ * A function that creates and organizes all the different help instructions into a collapsable table that people can use to learn about the application
+ * @param {Object} props - decoded user payload information
+ * @returns {Object} - the html for the React Component
+ */
+function Help(props) {
+
+  const [isLoading, setLoading] = useState([]);
+  const [message, setMessage] = useState();
+  const [screenText, setScreenText] = useState({});
+
+  useEffect(() => {
+    if(localStorage.getItem("translation") != null){
+      setScreenText(JSON.parse(localStorage.getItem("translation")));
+    }else{
+      setScreenText(props.auth.user.screenText);
+    }
+
+    setLoading(false);
+
+  }, []);
+
+  return (
+  
+      &lt;div className="Help">
+        {isLoading ? (
+          &lt;div className="d-flex justify-content-center">
+            &lt;Spinner animation="border" />
+          &lt;/div>
+        ) : (
+          &lt;React.Fragment>
+            &lt;h2 className="display-3 text-center"> {screenText["Help"]} &lt;/h2>
+            &lt;div className="d-flex justify-content-center">
+                &lt;p>&lt;i>{screenText["Click on an item to learn more about that topic!"]}&lt;/i>&lt;/p>
+            &lt;/div>
+            &lt;br>&lt;/br>
+
+            {message &amp;&amp; (
+              &lt;React.Fragment>
+                &lt;Alert className="text-center" variant="danger">
+                  {message}
+                &lt;/Alert>
+                &lt;br>&lt;/br>
+              &lt;/React.Fragment>
+            )}
+
+            {props.auth.user.role === "online-user" &amp;&amp; 
+                &lt;React.Fragment>
+                    
+
+                &lt;/React.Fragment>
+            }
+
+            {props.auth.user.role === "user" &amp;&amp; 
+                &lt;React.Fragment>
+                    &lt;Table bordered hover className="text-center">
+                        &lt;tbody>
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow0" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">{screenText["How to Make an Order"]} ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow0">
+                                    &lt;br>&lt;/br>
+                                        &lt;p>1. Click the box for whatever item you wish to add to your bag.&lt;/p>
+                                        &lt;p>2. Select item details and click add to bag.&lt;/p>
+                                        &lt;p>3. Click 'Bag' in the navigation menu up top.&lt;/p>
+                                        &lt;p>4. Confirm your order and click 'Submit Order'.&lt;/p>
+                                        &lt;p>5. Wait by the pickup counter for your food.&lt;/p>
+
+                                    &lt;br>&lt;/br>
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow1" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">{screenText["How to Add Items to Your Bag"]} ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow1">
+                                    &lt;br>&lt;/br>
+                                        &lt;p>1. Click the box for whatever item you wish to add to your bag. (Boxes highlighted in red)&lt;/p>
+                                        &lt;img src={menuRedHighlight} width="500px">&lt;/img>
+                                        &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                        &lt;p>2. Select desired options from the menu.&lt;/p>
+                                        &lt;img src={menuItemSelect} width="300px">&lt;/img>
+                                        &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                        &lt;p>3. Click 'Add to Bag'&lt;/p>
+                                        &lt;img src={addToBag} width="500px">&lt;/img>
+                                        &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;br>&lt;/br>
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow2" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">{screenText["How to Edit an Order"]} ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow2">
+                                    
+                                    Sup
+                                    
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow3" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">{screenText["Submitting an Order"]} ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow3">
+                                    
+                                    Sup
+                                    
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow4" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">{screenText["Changing your Settings"]} ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow4">
+                                    &lt;p>1. Navigate to the 'Settings' tab in the navigation above.&lt;/p>
+                                    &lt;p>As of now, we only support language changes.&lt;/p>
+                                    &lt;p>2. Select the language drop down box and pick your desired language.&lt;/p>
+                                    &lt;img src={languageBox} width="800px">&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;img src={selectLanguage} width="500px">&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;img src={saveSettings} width="500px">&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;p>3. Wait for new language to load.&lt;/p>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+                        &lt;/tbody>
+
+                    &lt;/Table>
+                &lt;/React.Fragment>
+            }
+
+            {props.auth.user.role === "cashier" &amp;&amp; 
+                &lt;React.Fragment>
+                    &lt;Table bordered hover className="text-center">
+                        &lt;tbody>
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow1" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">What to do when a customer approaches ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow1">
+                                    &lt;p>1. Greet the customer and look at their meal.&lt;/p>   
+                                    &lt;p>2. Enter in click buttons to add an item to their receipt.&lt;/p>
+                                    &lt;img src={cashierAdd}>&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;p>3. Tell the customer their total and ask for their payment.&lt;/p>
+                                    &lt;p>4. Process the customer's payment and give them their meal.&lt;/p>
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow2" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">How to Edit an Order ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow2">
+                                    &lt;p>1. If you added an item by mistake or the customer changed their mind, select the 'X' next to the item.&lt;/p>
+                                    &lt;img src={cashierEditItem}>&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;p>2. If needed, add another item to the receipt before continuing.&lt;/p>
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow3" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">Submitting an Order ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow3">
+                                    &lt;p>1. Confirm that the receipt is correct with the customer.&lt;/p>
+                                    &lt;p>2. Select 'Submit Order' below the items in the receipt.&lt;/p>
+                                    &lt;img src={cashierSubmit}>&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;p>3. Give the customer their food and say you salutation.&lt;/p>
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow4" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">Changing your Settings ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow4">
+                                    &lt;p>1. Navigate to the 'Settings' tab in the navigation above.&lt;/p>
+                                    &lt;p>As of now, we only support language changes.&lt;/p>
+                                    &lt;p>2. Select the language drop down box and pick your desired language.&lt;/p>
+                                    &lt;img src={languageBox} width="800px">&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;img src={selectLanguage} width="500px">&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;img src={saveSettings} width="500px">&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;p>3. Wait for new language to load.&lt;/p>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+                        &lt;/tbody>
+
+                    &lt;/Table>
+
+                &lt;/React.Fragment>
+            }
+
+            {props.auth.user.role === "manager" &amp;&amp; 
+                &lt;React.Fragment>
+                    &lt;Table bordered hover className="text-center">
+                        &lt;tbody>
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow1" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">How to Process Orders ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow1">
+                                    &lt;p>1. Greet the customer and look at their meal.&lt;/p>   
+                                    &lt;p>2. Enter in click buttons to add an item to their receipt.&lt;/p>
+                                    &lt;img src={cashierAdd}>&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;p>3. Confirm that the receipt is correct with the customer.&lt;/p>
+                                    &lt;p>4. Select 'Submit Order' below the items in the receipt.&lt;/p>
+                                    &lt;img src={cashierSubmit}>&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;p>5. Give the customer their food and say you salutation.&lt;/p>
+
+                                    &lt;br>&lt;/br>
+                                    &lt;p>&lt;b>If you need to edit an item:&lt;/b>&lt;/p>
+                                    &lt;p>1. If you added an item by mistake or the customer changed their mind, select the 'X' next to the item.&lt;/p>
+                                    &lt;img src={cashierEditItem}>&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;p>2. If needed, add another item to the receipt before continuing.&lt;/p>
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow2" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">How to Edit Menu Items ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow2">Sup&lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow3" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">How to Add New Menu Items ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow3">Sup&lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow4" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">How to Delete Menu Items ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow4">Sup&lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow5" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">How to Generate Reports ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow5">Sup&lt;/div>&lt;/td>
+                            &lt;/tr>
+
+                            &lt;tr className="table-secondary" data-toggle="collapse" data-target=".commentRow6" style={{cursor:'pointer'}}>
+                                &lt;td class="col-md-2">Changing your Settings ⬎&lt;/td>
+                            &lt;/tr>
+                            &lt;tr>
+                                &lt;td className="hiddenRow">&lt;div className="collapse commentRow6">
+                                    &lt;p>1. Navigate to the 'Settings' tab in the navigation above.&lt;/p>
+                                    &lt;p>As of now, we only support language changes.&lt;/p>
+                                    &lt;p>2. Select the language drop down box and pick your desired language.&lt;/p>
+                                    &lt;img src={languageBox} width="800px">&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;img src={selectLanguage} width="500px">&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;img src={saveSettings} width="500px">&lt;/img>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                    &lt;p>3. Wait for new language to load.&lt;/p>
+                                    &lt;br>&lt;/br>&lt;br>&lt;/br>
+                                &lt;/div>&lt;/td>
+                            &lt;/tr>
+                        &lt;/tbody>
+
+                    &lt;/Table>
+
+                &lt;/React.Fragment>
+            }
+
+
+            
+            &lt;br>&lt;/br>&lt;br>&lt;/br>&lt;br>&lt;/br>&lt;br>&lt;/br>
+          &lt;/React.Fragment>
+      )
+    }
+    &lt;/div>
+    );
+
+
+}
+
+Help.propTypes = {
+  auth: PropTypes.object.isRequired,
+};
+
+const mapStateToProps = (state) => ({
+  auth: state.auth,
+});
+
+export default connect(mapStateToProps)(Help);</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Help.html">Help</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-MenuItem.html">MenuItem</a></li><li><a href="module-NavBar.html">NavBar</a></li><li><a href="module-OrderReportCard.html">OrderReportCard</a></li><li><a href="module-Register.html">Register</a></li><li><a href="module-Settings.html">Settings</a></li><li><a href="module-UserMenu.html">UserMenu</a></li><li><a href="module-addMenuItem.html">addMenuItem</a></li><li><a href="module-adjustMenu.html">adjustMenu</a></li><li><a href="module-adjustableMenuItemCard.html">adjustableMenuItemCard</a></li><li><a href="module-authActions.html">authActions</a></li><li><a href="module-authReducers.html">authReducers</a></li><li><a href="module-bag.html">bag</a></li><li><a href="module-bagCard.html">bagCard</a></li><li><a href="module-dbInstance.html">dbInstance</a></li><li><a href="module-errorReducers.html">errorReducers</a></li><li><a href="module-findStore.html">findStore</a></li><li><a href="module-indexReducers.html">indexReducers</a></li><li><a href="module-landing.html">landing</a></li><li><a href="module-menu.html">menu</a></li><li><a href="module-menuItemCard.html">menuItemCard</a></li><li><a href="module-orderItemCard.html">orderItemCard</a></li><li><a href="module-orders.html">orders</a></li><li><a href="module-processOrders.html">processOrders</a></li><li><a href="module-reportItemCard.html">reportItemCard</a></li><li><a href="module-reports.html">reports</a></li><li><a href="module-restockReportCard.html">restockReportCard</a></li><li><a href="module-translator.html">translator</a></li><li><a href="module-types.html">types</a></li><li><a href="module-user.html">user</a></li><li><a href="module-userCard.html">userCard</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#PrivateCashierRoute">PrivateCashierRoute</a></li><li><a href="global.html#PrivateManagerRoute">PrivateManagerRoute</a></li><li><a href="global.html#PrivateOnlineUserRoute">PrivateOnlineUserRoute</a></li><li><a href="global.html#PrivateUserRoute">PrivateUserRoute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Dec 06 2022 19:58:14 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+.user-card{cursor:pointer;position:relative;top:0;transition:top .5s ease;box-shadow:0 4px 8px 0 rgba(0,0,0,.05),0 6px 20px 0 rgba(0,0,0,.19)}.user-card:hover{top:-10px}.card-img-top{width:100%;height:19vw;object-fit:contain}.hiddenRow{padding:0!important}.dropdown{background-color:#fff;display:flex;flex-direction:column;border:1px solid grey;overflow-y:scroll;height:200px}.dropdown:empty{border:none;height:0}.dropdown-row{cursor:pointer;text-align:start;margin:2px 0}
+/*# sourceMappingURL=main.2df8c1d8.chunk.css.map */

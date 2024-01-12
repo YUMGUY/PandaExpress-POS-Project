@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: routes/reports.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: routes/reports.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Reports routes module. This module creates a router that can be used to connect to our database and interact with any data pertaining to the manager reports.
+ * @module reports
+ */
+
+const express = require("express");
+
+/**
+ * function to get and set database information relative to manager reports
+ * @returns {Object} different methods to view and change the database
+ */
+const router = express.Router();
+
+/**
+ * A secure connection to the database
+ * Object
+ * @type {{connectionString: string}}
+ */
+const { pool } = require("../dbInstance");
+
+
+/**
+ * function to calculate the revenue within a given time period
+ * @param {string} startDate - a string containing the start date of the report
+ * @param {string} endDate - a string containing the end date of the report
+ * @returns {Object} An object with the total revenue earned in the time period given
+ */
+router.get("/getRevenue", async (req, res) => {
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
+
+    pool.query("SELECT SUM(total_price) as REVENUE FROM orders WHERE date BETWEEN '" + startDate + "' AND '" + endDate + "'", (err, result) => {
+        if(err) {
+            return console.log('Error executing query', err.stack)
+        }
+        res.json(result.rows[0]);
+    });
+});
+
+/**
+ * function to get the sales within a given time period
+ * @param {string} startDate - a string containing the start date of the report
+ * @param {string} endDate - a string containing the end date of the report
+ * @returns {Object} An object with the sales in the time period given
+ */
+router.get("/getSales", async (req, res) => {
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
+
+    pool.query("SELECT * FROM orders WHERE date BETWEEN '" + startDate + "' AND '" + endDate + "'", (err, result) => {
+        if(err) {
+            return console.log('Error executing query', err.stack)
+        }
+        res.json(result.rows);
+    });
+});
+
+/**
+ * function to calculate menu items that have not sold more than 10% of their inventory within a given time period
+ * @param {string} startDate - a string containing the start date of the report
+ * @param {string} endDate - a string containing the end date of the report
+ * @returns {Object} An object with each item that has excess
+ */
+router.get("/getExcessReport", async (req, res) => {
+    let startDate = req.query.startDate;
+    let endDate = req.query.endDate;
+
+    let itemStockTable = [];
+    var stockSoldTable = [];
+    (await pool.query("SELECT * FROM menu_items")).rows.forEach((menuItem) => {
+        itemStockTable.push({item: menuItem.item, stock: menuItem.stock});
+        stockSoldTable.push({item: menuItem.item, stock: 0})
+    });
+
+    pool.query("SELECT * FROM orders WHERE date BETWEEN '" + startDate + "' AND '" + endDate + "'", (err, result) => {
+        if(err) {
+            return console.log('Error executing query', err.stack)
+        }
+
+        result.rows.forEach((order) => {
+            let orderItems = order.items.split(", ");
+            orderItems.forEach((orderItem) => {
+                stockSoldTable.every((soldItem) => {
+                    if (soldItem.item == orderItem) {
+                        soldItem.stock += 1;
+                        return false;
+                    }
+                    return true;
+                });
+            });
+        });
+        // console.log(stockSoldTable);
+
+        var excessItems = [];
+        itemStockTable.forEach((menuItem, i) => {
+            if (stockSoldTable[i].stock &lt; (menuItem.stock / 10)) {
+                excessItems.push({item: menuItem.item, percentageSold: (stockSoldTable[i].stock / menuItem.stock), stock: menuItem.stock});
+            }
+        });
+
+        res.json(excessItems);
+    });
+});
+
+/**
+ * function to calculate how many times an item has sold with all other items
+ * @param {string} startDate - a string containing the start date of the report
+ * @param {string} endDate - a string containing the end date of the report
+ * @param {string} searchItem - a string that contains the name of the item being searched for
+ * @returns {Object} An object with each item that has sold with the search item and how many times within the given time period
+ */
+router.get("/getSellTogether", async (req, res) => {
+    //push request with item you want to compare
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
+    const searchItem = req.query.searchItem;
+
+    let counter = new Map();
+
+    pool.query("SELECT items FROM orders WHERE date BETWEEN '" + startDate + "' AND '" + endDate + "' AND items LIKE '%" + searchItem + "%'", (err, result) => {
+        if(err) {
+            return console.log('Error executing query', err.stack)
+        }
+        result.rows.forEach((order) => {
+            let orderItems = order.items.split(", ");
+            orderItems.forEach((orderItem) => {
+                if (orderItem != searchItem){
+                    if (counter.has(orderItem) == false) {
+                        counter.set(orderItem, 1);
+                        return false;
+                    }
+                    counter.set(orderItem, counter.get(orderItem)+1);
+                    return true;
+                }
+                return false;
+            });
+        });
+
+        var tempItems = [];
+        counter.forEach(function(key, value){
+            tempItems.push({key, value})
+        })
+
+        res.json(tempItems);
+    });
+});
+
+/**
+ * function to calculate menu items that have less than 10% of their inventory within a given time period
+ * @param {string} startDate - a string containing the start date of the report
+ * @param {string} endDate - a string containing the end date of the report
+ * @returns {Object} An object with each item that needs restocking
+ */
+router.get("/getRestock", async (req, res) => {
+    let startDate = req.query.startDate;
+    let endDate = req.query.endDate;
+
+    let itemStockTable = [];
+    var stockSoldTable = [];
+    (await pool.query("SELECT * FROM menu_items")).rows.forEach((menuItem) => {
+        itemStockTable.push({item: menuItem.item, stock: menuItem.stock});
+        stockSoldTable.push({item: menuItem.item, stock: 0})
+    });
+
+    pool.query("SELECT * FROM orders WHERE date BETWEEN '" + startDate + "' AND '" + endDate + "'", (err, result) => {
+        if(err) {
+            return console.log('Error executing query', err.stack)
+        }
+
+        result.rows.forEach((order) => {
+            let orderItems = order.items.split(", ");
+            orderItems.forEach((orderItem) => {
+                stockSoldTable.every((soldItem) => {
+                    if (soldItem.item == orderItem) {
+                        soldItem.stock += 1;
+                        return false;
+                    }
+                    return true;
+                });
+            });
+        });
+        // console.log(stockSoldTable);
+
+        var excessItems = [];
+        itemStockTable.forEach((menuItem, i) => {
+            if (stockSoldTable[i].stock > (menuItem.stock)) {
+                excessItems.push({item: menuItem.item, percentageSold: (stockSoldTable[i].stock / (stockSoldTable[i].stock + menuItem.stock)), stock: menuItem.stock});
+            }
+        });
+
+        res.json(excessItems);
+    });
+});
+
+module.exports = router;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Help.html">Help</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-MenuItem.html">MenuItem</a></li><li><a href="module-NavBar.html">NavBar</a></li><li><a href="module-OrderReportCard.html">OrderReportCard</a></li><li><a href="module-Register.html">Register</a></li><li><a href="module-Settings.html">Settings</a></li><li><a href="module-UserMenu.html">UserMenu</a></li><li><a href="module-addMenuItem.html">addMenuItem</a></li><li><a href="module-adjustMenu.html">adjustMenu</a></li><li><a href="module-adjustableMenuItemCard.html">adjustableMenuItemCard</a></li><li><a href="module-authActions.html">authActions</a></li><li><a href="module-authReducers.html">authReducers</a></li><li><a href="module-bag.html">bag</a></li><li><a href="module-bagCard.html">bagCard</a></li><li><a href="module-dbInstance.html">dbInstance</a></li><li><a href="module-errorReducers.html">errorReducers</a></li><li><a href="module-findStore.html">findStore</a></li><li><a href="module-indexReducers.html">indexReducers</a></li><li><a href="module-landing.html">landing</a></li><li><a href="module-menu.html">menu</a></li><li><a href="module-menuItemCard.html">menuItemCard</a></li><li><a href="module-orderItemCard.html">orderItemCard</a></li><li><a href="module-orders.html">orders</a></li><li><a href="module-processOrders.html">processOrders</a></li><li><a href="module-reportItemCard.html">reportItemCard</a></li><li><a href="module-reports.html">reports</a></li><li><a href="module-restockReportCard.html">restockReportCard</a></li><li><a href="module-translator.html">translator</a></li><li><a href="module-types.html">types</a></li><li><a href="module-user.html">user</a></li><li><a href="module-userCard.html">userCard</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#PrivateCashierRoute">PrivateCashierRoute</a></li><li><a href="global.html#PrivateManagerRoute">PrivateManagerRoute</a></li><li><a href="global.html#PrivateOnlineUserRoute">PrivateOnlineUserRoute</a></li><li><a href="global.html#PrivateUserRoute">PrivateUserRoute</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Dec 06 2022 19:58:14 GMT-0600 (Central Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
